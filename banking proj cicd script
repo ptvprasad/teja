@@ -1,0 +1,62 @@
+pipeline {
+    agent { label 'jd' }
+
+    tools {
+        // Maven configured "M3"
+        maven "M3"
+    }
+
+    stages {
+        stage('pull from source') {
+            steps {
+                // Get code from git repo with credentials
+                git branch: 'main', credentialsId: 'github-pat', url: 'https://github.com/ptvprasad/banking-proj.git'
+            } 
+        }
+
+        stage('compile') {
+            steps {
+                sh "mvn compile"
+            }
+        }
+
+        stage('test') {
+            steps {
+                sh "mvn test"
+            }
+        }
+
+        stage('package') {
+            steps {
+                sh "mvn package"
+            }
+        }
+
+        stage('image') {
+            steps {
+                sh "docker build -t bankingproj ."
+            }
+        }
+
+        stage("container run") {
+            steps {
+                sh "docker run -d -p 8081:8081 bankingproj:latest"
+            }
+        }
+
+        stage('docker login') {  // Corrected 'tage' to 'stage'
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-acc', passwordVariable: 'docker_pass', usernameVariable: 'docker_user')]) {
+                    sh "docker login -u $docker_user -p $docker_pass"
+                }
+            }
+        }
+
+        stage("docker tag & push") {
+            steps {
+                sh "docker tag bankingproj teja694/bankingproj:latest"
+                sh "docker push teja694/bankingproj:latest"
+            }
+        }
+    }
+}
