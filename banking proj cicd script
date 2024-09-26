@@ -44,7 +44,7 @@ pipeline {
             }
         }
 
-        stage('docker login') {  // Corrected 'tage' to 'stage'
+        stage('docker login') {  // go to pipeline syntax and select with credentials from dropdown to generate below with credentials script 
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-acc', passwordVariable: 'docker_pass', usernameVariable: 'docker_user')]) {
                     sh "docker login -u $docker_user -p $docker_pass"
