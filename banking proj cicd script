@@ -38,13 +38,7 @@ pipeline {
             }
         }
 
-        stage("container run") {
-            steps {
-                sh "docker run -d -p 8081:8081 bankingproj:latest"
-            }
-        }
-
-        stage('docker login') {  // go to pipeline syntax and select with credentials from dropdown to generate below with credentials script 
+        stage('docker login') {  // Corrected 'tage' to 'stage'
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-acc', passwordVariable: 'docker_pass', usernameVariable: 'docker_user')]) {
                     sh "docker login -u $docker_user -p $docker_pass"
@@ -58,5 +52,10 @@ pipeline {
                 sh "docker push teja694/bankingproj:latest"
             }
         }
+        stage ("deploy to prod") {
+            steps {
+                ansiblePlaybook become: true, credentialsId: 'ansible', disableHostKeyChecking: true, installation: 'ansible', inventory: '/etc/ansible/hosts', playbook: '/etc/project/workspace/banking-project/prodplaybook.yml', vaultTmpPath: ''
+            }   
+       }
     }
 }
