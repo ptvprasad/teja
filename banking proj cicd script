@@ -37,8 +37,12 @@ pipeline {
                 sh "docker build -t bankingproj ."
             }
         }
-
-        stage('docker login') {  // Corrected 'tage' to 'stage'
+   //     stage('create container') { #skip this if container already built, else remove comment and continue
+   //         steps {
+   //            sh "docker run -d -p 8081:8081 bankingproj:latest"
+   //          }
+   //     }
+        stage('docker login') {  
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-acc', passwordVariable: 'docker_pass', usernameVariable: 'docker_user')]) {
                     sh "docker login -u $docker_user -p $docker_pass"
