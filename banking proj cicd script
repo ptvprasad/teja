@@ -38,11 +38,11 @@ pipeline {
             }
         }
 
-        // stage('create container') { // skip this if container already built, else remove comment and continue
-        //     steps {
-        //         sh "docker run -d -p 8081:8081 bankingproj:latest"
-        //     }
-        // }
+         stage('create container') { // skip this if container already built, else remove comment and continue
+             steps {
+                 sh "docker run -d -p 8081:8081 bankingproj:latest"
+            }
+         }
 
         stage('docker login') {  
             steps {
