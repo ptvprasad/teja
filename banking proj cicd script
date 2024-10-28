@@ -31,35 +31,50 @@ pipeline {
                 sh "mvn package"
             }
         }
-
+        
         stage('image') {
             steps {
                 sh "docker build -t bankingproj ."
             }
         }
-   //     stage('create container') { #skip this if container already built, else remove comment and continue
-   //         steps {
-   //            sh "docker run -d -p 8081:8081 bankingproj:latest"
-   //          }
-   //     }
+
+        // stage('create container') { // skip this if container already built, else remove comment and continue
+        //     steps {
+        //         sh "docker run -d -p 8081:8081 bankingproj:latest"
+        //     }
+        // }
+
         stage('docker login') {  
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-acc', passwordVariable: 'docker_pass', usernameVariable: 'docker_user')]) {
-                    sh "docker login -u $docker_user -p $docker_pass"
+                withCredentials([usernamePassword(credentialsId: 'docker', passwordVariable: 'docker_pass', usernameVariable: 'docker')]) {
+                    sh "docker login -u $docker -p $docker_pass"
                 }
             }
         }
 
-        stage("docker tag & push") {
+        stage('docker tag & push') {
             steps {
                 sh "docker tag bankingproj teja694/bankingproj:latest"
                 sh "docker push teja694/bankingproj:latest"
             }
         }
-        stage ("deploy to prod") {
+
+        stage('terraform') {
             steps {
-                ansiblePlaybook become: true, credentialsId: 'ansible', disableHostKeyChecking: true, installation: 'ansible', inventory: '/etc/ansible/hosts', playbook: '/etc/project/workspace/banking-project/prodplaybook.yml', vaultTmpPath: ''
-            }   
-       }
+                withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: '637423388510', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    dir('terraform') {
+                        sh 'terraform init'
+                        sh 'terraform validate'
+                        sh 'terraform apply --auto-approve'
+                    }
+                }
+            }
+        }
+
+        stage('ansible deployment') { // Changed stage name to avoid duplication
+            steps {
+                ansiblePlaybook credentialsId: 'ansible', disableHostKeyChecking: true, installation: 'ansible', inventory: '/etc/ansible/hosts', playbook: '/home/project/workspace/terratest/prodplaybook.yml', vaultTmpPath: ''
+            }
+        }
     }
 }
